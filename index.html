@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon FBA Refund Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 15px;
+            max-width: 100%;
+            margin: 0 auto;
+            line-height: 1.5;
+            color: #333;
+        }
+        h1 {
+            color: #FF9900;
+            font-size: 1.5em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        .calculator {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .section h2 {
+            color: #FF9900;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background: #FF9900;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .csv-upload {
+            border: 2px dashed #ddd;
+            padding: 10px;
+            text-align: center;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #f0f7ff;
+            font-size: 0.8em;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-left: 4px solid #4285f4;
+            display: none;
+        }
+        .result-item {
+            margin-bottom: 10px;
+        }
+        .highlight {
+            color: #FF9900;
+            font-weight: bold;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @media (min-width: 768px) {
+            body {
+                max-width: 800px;
+                padding: 20px;
+            }
+        }
+    </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1641236408865438"
+    crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>Amazon FBA Refund Calculator</h1>
+    <p class="subtitle">Every cost, fee, and reimbursement for accurate profit tracking</p>
+    
+    <div class="calculator">
+        <!-- CSV Upload (Compact) -->
+        <div class="csv-upload">
+            <p><strong>Bulk Upload?</strong> Drag & drop CSV <input type="file" id="csv-file" accept=".csv" style="display:none;"></p>
+            <small>Columns: Price, COGS, Units Sold, Return Rate, Fees</small>
+        </div>
+
+        <!-- 1. Product & Sales -->
+        <div class="section">
+            <h2>Product & Sales</h2>
+            <div class="input-group">
+                <label for="price">Product Price ($)</label>
+                <input type="number" id="price" step="0.01" min="0" placeholder="e.g., 49.99">
+            </div>
+            <div class="input-group">
+                <label for="cogs">Cost of Goods ($)</label>
+                <input type="number" id="cogs" step="0.01" min="0" placeholder="e.g., 12.50">
+            </div>
+            <div class="input-group">
+                <label for="units-sold">Units Sold/Month</label>
+                <input type="number" id="units-sold" min="1" placeholder="e.g., 100">
+            </div>
+            <div class="input-group">
+                <label for="return-rate">Return Rate (%)</label>
+                <input type="number" id="return-rate" step="0.1" min="0" max="100" placeholder="e.g., 15">
+            </div>
+        </div>
+
+        <!-- 2. Amazon Fees -->
+        <div class="section">
+            <h2>Amazon Fees</h2>
+            <div class="input-group">
+                <label for="referral-fee">Referral Fee (%)</label>
+                <input type="number" id="referral-fee" step="0.1" min="0" placeholder="e.g., 15">
+            </div>
+            <div class="input-group">
+                <label for="fba-fee">FBA Fulfillment Fee ($)</label>
+                <input type="number" id="fba-fee" step="0.01" min="0" placeholder="e.g., 3.50">
+            </div>
+            <div class="input-group">
+                <label for="variable-fee">Variable Closing Fee ($)</label>
+                <input type="number" id="variable-fee" step="0.01" min="0" placeholder="e.g., 1.80 (for media)">
+            </div>
+            <div class="input-group">
+                <label for="refund-admin-fee">Refund Admin Fee ($)</label>
+                <input type="number" id="refund-admin-fee" step="0.01" min="0" placeholder="Auto-calculated" disabled>
+            </div>
+        </div>
+
+        <!-- 3. Return Costs -->
+        <div class="section">
+            <h2>Return Costs</h2>
+            <div class="input-group">
+                <label for="restocking-fee">Restocking Fee ($)</label>
+                <input type="number" id="restocking-fee" step="0.01" min="0" placeholder="e.g., 5.00">
+            </div>
+            <div class="input-group">
+                <label for="return-shipping">Return Shipping Cost ($)</label>
+                <input type="number" id="return-shipping" step="0.01" min="0" placeholder="e.g., 3.50">
+            </div>
+            <div class="input-group">
+                <label for="storage-days">Days in Amazon Warehouse</label>
+                <input type="number" id="storage-days" min="0" placeholder="e.g., 45">
+            </div>
+            <div class="input-group">
+                <label for="storage-fee">Monthly Storage Fee ($/unit)</label>
+                <input type="number" id="storage-fee" step="0.01" min="0" placeholder="e.g., 0.25">
+            </div>
+        </div>
+
+        <!-- 4. Reimbursements & Adjustments -->
+        <div class="section">
+            <h2>Reimbursements</h2>
+            <div class="input-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="lost-by-amazon"> Item Lost/Damaged by Amazon?
+                </label>
+            </div>
+            <div class="input-group">
+                <label for="marketplace">Marketplace</label>
+                <select id="marketplace">
+                    <option value="us">USA (Standard)</option>
+                    <option value="eu">Europe (+20% costs)</option>
+                    <option value="jp">Japan (-5% costs)</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="calculate()">Calculate True Profit</button>
+
+        <!-- Results -->
+        <div id="results">
+            <h3>Results</h3>
+            <div class="result-item">
+                Gross Profit: <span id="gross-profit" class="highlight">$0.00</span>
+            </div>
+            <div class="result-item">
+                Net Profit After Returns: <span id="net-profit" class="highlight">$0.00</span>
+            </div>
+            <div class="result-item">
+                Total Lost to Returns: <span id="total-loss" class="highlight">$0.00</span>
+            </div>
+            <div class="result-item">
+                Estimated Reimbursements: <span id="total-reimbursement" class="highlight">$0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CSV Upload Handler
+        document.getElementById('csv-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    const data = results.data[0]; // First row
+                    if (data) {
+                        document.getElementById('price').value = data['Product Price'] || '';
+                        document.getElementById('cogs').value = data.COGS || '';
+                        document.getElementById('units-sold').value = data['Units Sold'] || '';
+                        document.getElementById('return-rate').value = data['Return Rate'] || '';
+                        document.getElementById('referral-fee').value = data['Referral Fee'] || '';
+                        document.getElementById('fba-fee').value = data['FBA Fee'] || '';
+                    }
+                }
+            });
+        });
+
+        // Calculation Logic (Full Math)
+        function calculate() {
+            // 1. Core Inputs
+            const price = parseFloat(document.getElementById("price").value) || 0;
+            const cogs = parseFloat(document.getElementById("cogs").value) || 0;
+            const unitsSold = parseInt(document.getElementById("units-sold").value) || 0;
+            const returnRate = (parseFloat(document.getElementById("return-rate").value) || 0) / 100;
+
+            // 2. Amazon Fees
+            const referralFeePct = (parseFloat(document.getElementById("referral-fee").value) || 0) / 100;
+            const referralFee = price * referralFeePct;
+            const fbaFee = parseFloat(document.getElementById("fba-fee").value) || 0;
+            const variableFee = parseFloat(document.getElementById("variable-fee").value) || 0;
+            const refundAdminFee = referralFee * 0.2; // 20% of referral fee
+            document.getElementById("refund-admin-fee").value = refundAdminFee.toFixed(2);
+
+            // 3. Return Costs
+            const restockingFee = parseFloat(document.getElementById("restocking-fee").value) || 0;
+            const returnShipping = parseFloat(document.getElementById("return-shipping").value) || 0;
+            const storageDays = parseFloat(document.getElementById("storage-days").value) || 0;
+            const storageFee = parseFloat(document.getElementById("storage-fee").value) || 0;
+            const storageCost = (storageDays / 30) * storageFee;
+
+            // 4. Reimbursements & Adjustments
+            const isLostByAmazon = document.getElementById("lost-by-amazon").checked;
+            const reimbursement = isLostByAmazon ? price - referralFee : 0;
+            const marketplace = document.getElementById("marketplace").value;
+            const marketplaceMultiplier = marketplace === 'eu' ? 1.2 : marketplace === 'jp' ? 0.95 : 1;
+
+            // 5. Final Math
+            const returnsCount = Math.floor(unitsSold * returnRate);
+            const grossProfit = (price - cogs - referralFee - fbaFee - variableFee) * unitsSold;
+            const totalReturnCosts = returnsCount * (restockingFee + returnShipping + refundAdminFee + storageCost) * marketplaceMultiplier;
+            const netProfit = grossProfit - totalReturnCosts + (reimbursement * returnsCount);
+
+            // Display Results
+            document.getElementById("gross-profit").textContent = `$${grossProfit.toFixed(2)}`;
+            document.getElementById("net-profit").textContent = `$${netProfit.toFixed(2)}`;
+            document.getElementById("total-loss").textContent = `$${totalReturnCosts.toFixed(2)}`;
+            document.getElementById("total-reimbursement").textContent = `$${(reimbursement * returnsCount).toFixed(2)}`;
+            document.getElementById("results").style.display = "block";
+        }
+    </script>
+</body>
+</html>
